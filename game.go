@@ -78,13 +78,6 @@ func CompareChar(hang *HangManData, input string) {
 	}
 }
 
-package hangman
-
-import (
-	"net/http"
-	"strings"
-)
-
 func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, renderTemplate func(http.ResponseWriter, string, interface{})) {
 	err := r.ParseForm()
 	if err != nil {
