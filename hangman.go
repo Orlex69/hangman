@@ -2,24 +2,27 @@ package hangman
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 type HangManData struct {
-	Word        string
-	ToFind      string
-	Attempts    int
-	LettersUsed []string
+	Word        string   // Mot en cours (avec les lettres découvertes)
+	ToFind      string   // Mot à trouver
+	Attempts    int      // Nombre de tentatives restantes
+	LettersUsed []string // Lettres déjà utilisées
 }
 
-func StartTheGame(wordFile, hangmanFile string) HangManData {
+// Initialise le jeu avec un fichier de mots et un fichier hangman (facultatif)
+func StartTheGame(wordFile string) HangManData {
 	words := readWordsFromFile(wordFile)
 	rand.Seed(time.Now().UnixNano())
 	randomWord := words[rand.Intn(len(words))]
+
 	return HangManData{
 		ToFind:   randomWord,
 		Word:     HideWord(randomWord),
@@ -27,36 +30,28 @@ func StartTheGame(wordFile, hangmanFile string) HangManData {
 	}
 }
 
+// Cache une partie des lettres du mot
 func HideWord(randWord string) string {
 	rand.Seed(time.Now().UnixNano())
 	hiddenWord := []rune(randWord)
 	randomletters := make(map[rune]bool)
-	l := (len(randWord) / 2) - 1
-	for len(randomletters) < l {
+
+	// Calculer le nombre de lettres visibles
+	visibleCount := (len(randWord) / 2) - 1
+	for len(randomletters) < visibleCount {
 		index := rand.Intn(len(randWord))
 		randomletters[rune(randWord[index])] = true
 	}
-	for l, letter := range randWord {
+
+	for i, letter := range randWord {
 		if !randomletters[letter] {
-			hiddenWord[l] = '_'
+			hiddenWord[i] = '_'
 		}
 	}
 	return string(hiddenWord)
 }
 
-func JoseHang(hang *HangManData) {
-	hangman := readWordsFromFile("hangman.txt")
-	firstLine := 8
-	hangLine := firstLine * (10 - hang.Attempts - 1)
-	for i := 0; i < 7 && hangLine < len(hangman); i++ {
-		if hangLine > len(hangman) || hang.Attempts == 10 {
-			return
-		}
-		fmt.Println(hangman[hangLine][0:9])
-		hangLine++
-	}
-}
-
+// Gère l'entrée utilisateur (via HTTP) pour deviner des lettres
 func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, renderTemplate func(http.ResponseWriter, string, interface{})) {
 	err := r.ParseForm()
 	if err != nil {
@@ -64,19 +59,20 @@ func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, ren
 		return
 	}
 
+	// Récupérer l'entrée utilisateur
 	input := r.Form.Get("input")
 	if input == "" {
 		http.Error(w, "Aucune entrée reçue.", http.StatusBadRequest)
 		return
 	}
 
-	// Convertir l'entrée en minuscules
+	// Convertir en minuscules
 	input = strings.ToLower(input)
 
-	// Gestion du jeu
+	// Vérifier la lettre et mettre à jour le jeu
 	CompareChar(game, input)
 
-	// Préparer les données pour le template
+	// Préparer les données pour la page
 	data := struct {
 		Word      string
 		Attempts  int
@@ -89,16 +85,42 @@ func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, ren
 		HangState: "Continuez à deviner !",
 	}
 
+	// Vérifier les conditions de victoire ou de défaite
 	if game.Attempts == 0 {
 		data.HangState = "Désolé, vous avez perdu. Le mot était : " + game.ToFind
 	} else if game.Word == game.ToFind {
 		data.HangState = "Félicitations, vous avez trouvé le mot : " + game.ToFind
 	}
 
-	// Renvoyer les données au template HTML
+	// Renvoyer les données au template
 	renderTemplate(w, "Game.html", data)
 }
 
+// Compare l'entrée utilisateur au mot à trouver
+func CompareChar(hang *HangManData, input string) {
+	found := false
+	for i, letter := range hang.ToFind {
+		if string(letter) == input {
+			hang.Word = hang.Word[:i] + input + hang.Word[i+1:]
+			found = true
+		}
+	}
+
+	// Si la lettre n'est pas trouvée
+	if !found {
+		// Vérifier si la lettre a déjà été utilisée
+		for _, used := range hang.LettersUsed {
+			if used == input {
+				return
+			}
+		}
+		// Ajouter la lettre aux lettres utilisées et réduire les tentatives
+		hang.LettersUsed = append(hang.LettersUsed, input)
+		hang.Attempts--
+	}
+}
+
+// Lit les mots depuis un fichier texte
 func readWordsFromFile(filename string) []string {
 	file, err := os.Open(filename)
 	if err != nil {

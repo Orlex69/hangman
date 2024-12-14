@@ -78,48 +78,6 @@ func CompareChar(hang *HangManData, input string) {
 	}
 }
 
-func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, renderTemplate func(http.ResponseWriter, string, interface{})) {
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Erreur lors du traitement du formulaire.", http.StatusBadRequest)
-		return
-	}
-
-	input := r.Form.Get("input")
-	if input == "" {
-		http.Error(w, "Aucune entrée reçue.", http.StatusBadRequest)
-		return
-	}
-
-	// Convertir l'entrée en minuscules
-	input = strings.ToLower(input)
-
-	// Gestion du jeu
-	CompareChar(game, input)
-
-	// Préparer les données pour le template
-	data := struct {
-		Word      string
-		Attempts  int
-		Letters   []string
-		HangState string
-	}{
-		Word:      game.Word,
-		Attempts:  game.Attempts,
-		Letters:   game.LettersUsed,
-		HangState: "Continuez à deviner !",
-	}
-
-	if game.Attempts == 0 {
-		data.HangState = "Désolé, vous avez perdu. Le mot était : " + game.ToFind
-	} else if game.Word == game.ToFind {
-		data.HangState = "Félicitations, vous avez trouvé le mot : " + game.ToFind
-	}
-
-	// Renvoyer les données au template HTML
-	renderTemplate(w, "Game.html", data)
-}
-
 
 func PlayGame(hang *HangManData) {
 	for hang.Attempts > 0 && hang.Word != hang.ToFind {
