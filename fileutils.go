@@ -1,9 +1,7 @@
 package hangman
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 )
 
