@@ -98,25 +98,75 @@ func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, ren
 
 // Compare l'entrée utilisateur au mot à trouver
 func CompareChar(hang *HangManData, input string) {
-	found := false
-	for i, letter := range hang.ToFind {
-		if string(letter) == input {
-			hang.Word = hang.Word[:i] + input + hang.Word[i+1:]
-			found = true
+	if len(input) > 1 && (input >= "a" && input <= "z") {
+		clearScreen()
+		if input == hang.ToFind {
+			hang.Word = hang.ToFind
+			JoseHang(hang)
+			fmt.Println("Félicitations, tu as trouvé le mot complet : ", hang.ToFind)
+			fmt.Println("Tu as gagné avec", hang.Attempts, "vies restantes. Bravo !")
+		} else if input != hang.ToFind && hang.Attempts > 2 {
+			clearScreen()
+			hang.Attempts -= 2
+			fmt.Println("Bonne tentative, mais réessaie !")
+			fmt.Println("Tentatives restantes : ", hang.Attempts)
+			JoseHang(hang)
+		} else {
+			fmt.Println("Désolé, tu as perdu. Le mot à trouver était : ", hang.ToFind)
+			fmt.Println("Tentatives restantes : 0")
+			JoseHang(hang)
+			QuitGame()
 		}
-	}
-
-	// Si la lettre n'est pas trouvée
-	if !found {
-		// Vérifier si la lettre a déjà été utilisée
-		for _, used := range hang.LettersUsed {
-			if used == input {
-				return
+	} else {
+		FoundInWord := false
+		if len(input) == 0 {
+			return
+		}
+		input1 := rune(input[0])
+		for z, i := range hang.ToFind {
+			if i == input1 {
+				hang.Word = hang.Word[:z] + string(i) + hang.Word[z+1:]
+				FoundInWord = true
 			}
 		}
-		// Ajouter la lettre aux lettres utilisées et réduire les tentatives
-		hang.LettersUsed = append(hang.LettersUsed, input)
-		hang.Attempts--
+
+		if !FoundInWord {
+			clearScreen()
+			for _, i := range hang.LettersUsed {
+				if i == input {
+					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
+					JoseHang(hang)
+					fmt.Println("Lettres déjà utilisées :", hang.LettersUsed)
+					return
+				}
+			}
+			hang.Attempts--
+			hang.LettersUsed = append(hang.LettersUsed, input)
+			fmt.Println("Désolé, cette lettre n'est pas dans le mot.")
+			fmt.Println("Tentatives restantes : ", hang.Attempts)
+			JoseHang(hang)
+			if hang.Attempts == 0 {
+				fmt.Println("Désolé, tu as perdu. Le mot à trouver était :", hang.ToFind)
+			}
+		} else {
+			clearScreen()
+			for _, i := range hang.LettersUsed {
+				if i == input {
+					fmt.Println()
+					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
+					JoseHang(hang)
+					fmt.Println("Lettres déjà utilisées :", hang.LettersUsed)
+					return
+				}
+			}
+			hang.LettersUsed = append(hang.LettersUsed, input)
+			fmt.Println("Bien joué, cette lettre est dans le mot !")
+			fmt.Println("Tentatives restantes : ", hang.Attempts)
+			JoseHang(hang)
+			if hang.Word == hang.ToFind {
+				fmt.Println("Félicitations, tu as trouvé le mot : ", hang.ToFind)
+			}
+		}
 	}
 }
 
