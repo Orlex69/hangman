@@ -102,7 +102,6 @@ func CompareChar(hang *HangManData, input string) {
 		clearScreen()
 		if input == hang.ToFind {
 			hang.Word = hang.ToFind
-			JoseHang(hang)
 			fmt.Println("Félicitations, tu as trouvé le mot complet : ", hang.ToFind)
 			fmt.Println("Tu as gagné avec", hang.Attempts, "vies restantes. Bravo !")
 		} else if input != hang.ToFind && hang.Attempts > 2 {
@@ -110,11 +109,9 @@ func CompareChar(hang *HangManData, input string) {
 			hang.Attempts -= 2
 			fmt.Println("Bonne tentative, mais réessaie !")
 			fmt.Println("Tentatives restantes : ", hang.Attempts)
-			JoseHang(hang)
 		} else {
 			fmt.Println("Désolé, tu as perdu. Le mot à trouver était : ", hang.ToFind)
 			fmt.Println("Tentatives restantes : 0")
-			JoseHang(hang)
 			QuitGame()
 		}
 	} else {
@@ -135,7 +132,6 @@ func CompareChar(hang *HangManData, input string) {
 			for _, i := range hang.LettersUsed {
 				if i == input {
 					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
-					JoseHang(hang)
 					fmt.Println("Lettres déjà utilisées :", hang.LettersUsed)
 					return
 				}
@@ -144,7 +140,6 @@ func CompareChar(hang *HangManData, input string) {
 			hang.LettersUsed = append(hang.LettersUsed, input)
 			fmt.Println("Désolé, cette lettre n'est pas dans le mot.")
 			fmt.Println("Tentatives restantes : ", hang.Attempts)
-			JoseHang(hang)
 			if hang.Attempts == 0 {
 				fmt.Println("Désolé, tu as perdu. Le mot à trouver était :", hang.ToFind)
 			}
@@ -154,7 +149,6 @@ func CompareChar(hang *HangManData, input string) {
 				if i == input {
 					fmt.Println()
 					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
-					JoseHang(hang)
 					fmt.Println("Lettres déjà utilisées :", hang.LettersUsed)
 					return
 				}
@@ -162,7 +156,6 @@ func CompareChar(hang *HangManData, input string) {
 			hang.LettersUsed = append(hang.LettersUsed, input)
 			fmt.Println("Bien joué, cette lettre est dans le mot !")
 			fmt.Println("Tentatives restantes : ", hang.Attempts)
-			JoseHang(hang)
 			if hang.Word == hang.ToFind {
 				fmt.Println("Félicitations, tu as trouvé le mot : ", hang.ToFind)
 			}
