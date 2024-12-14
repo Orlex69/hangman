@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"fmt"
 )
 
 type HangManData struct {
@@ -99,22 +100,19 @@ func InputHandler(w http.ResponseWriter, r *http.Request, game *HangManData, ren
 // Compare l'entrée utilisateur au mot à trouver
 func CompareChar(hang *HangManData, input string) {
 	if len(input) > 1 && (input >= "a" && input <= "z") {
-		clearScreen()
 		if input == hang.ToFind {
 			hang.Word = hang.ToFind
 			fmt.Println("Félicitations, tu as trouvé le mot complet : ", hang.ToFind)
 			fmt.Println("Tu as gagné avec", hang.Attempts, "vies restantes. Bravo !")
 		} else if input != hang.ToFind && hang.Attempts > 2 {
-			clearScreen()
 			hang.Attempts -= 2
 			fmt.Println("Bonne tentative, mais réessaie !")
 			fmt.Println("Tentatives restantes : ", hang.Attempts)
 		} else {
 			fmt.Println("Désolé, tu as perdu. Le mot à trouver était : ", hang.ToFind)
 			fmt.Println("Tentatives restantes : 0")
-			QuitGame()
 		}
-	} else {
+	} else { // Cette partie appartient à l'autre bloc conditionnel
 		FoundInWord := false
 		if len(input) == 0 {
 			return
@@ -128,7 +126,6 @@ func CompareChar(hang *HangManData, input string) {
 		}
 
 		if !FoundInWord {
-			clearScreen()
 			for _, i := range hang.LettersUsed {
 				if i == input {
 					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
@@ -144,10 +141,8 @@ func CompareChar(hang *HangManData, input string) {
 				fmt.Println("Désolé, tu as perdu. Le mot à trouver était :", hang.ToFind)
 			}
 		} else {
-			clearScreen()
 			for _, i := range hang.LettersUsed {
 				if i == input {
-					fmt.Println()
 					fmt.Println("Tu as déjà utilisé cette lettre, essaie une autre !")
 					fmt.Println("Lettres déjà utilisées :", hang.LettersUsed)
 					return
